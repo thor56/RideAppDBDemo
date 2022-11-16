@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+      <meta charset="utf-8">
+      <title>Flask SQL Tutorial</title>
+  </head>
+  <body>
+      <form action="{{ url_for('adduser')}}" method="post">
+          <h5>SignUp!</h5>
+          
+          <div>
+              <input type="text" name="u_id" placeholder="Enter Id">
+          </div>
+          <div>
+              <input type="text" name="u_name" placeholder="Enter UserName">
+          </div>
+          <div>
+            <input type="text" name="u_email" placeholder="Enter Email">
+        </div>
+        <div>
+            <input type="text" name="u_pasword" placeholder="Enter Password">
+        </div>
+        <div>
+            <input type="text" name="u_phone" placeholder="Enter Phone Number">
+        </div>
+          <div>
+              <button >Submit</button>
+          </div>
+      </form>
+  </body>
+
+</html>

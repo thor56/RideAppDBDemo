@@ -1,0 +1,5 @@
+
+
+
+CREATE SEQUENCE test_id_seq MINVALUE 0;
+ALTER TABLE users ALTER u_id SET DEFAULT nextval('test_id_seq');
