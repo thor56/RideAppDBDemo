@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block content %}
+      <form action="{{ url_for('validateLogin')}}" method="post">
+          <h5>Login</h5>
+          
+         
+          <div>
+              <input type="text" name="u_name" placeholder="Enter UserName">
+          </div>
+         
+        <div>
+            <input type="text" name="u_pasword" placeholder="Enter Password">
+        </div>
+        
+          <div>
+              <button >Login</button>
+          </div>
+      </form>
+{% endblock %}

@@ -1,15 +1,26 @@
 
+import json
 import os
+from typing import Sequence
 import psycopg2
 from flask import Flask, render_template, request, flash
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import Sequence, create_engine
+from datetime import datetime
+import pandas as pd
+from flask_bootstrap import Bootstrap5
+from flask import Flask
+
+
 
 app = Flask(__name__)
+bootstrap = Bootstrap5(app)
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:1234@localhost/postgres'
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 # app.secret_key = 'secret string'
 db = SQLAlchemy(app)
+engine = create_engine('postgresql://postgres:1234@localhost/postgres')
 
 
 # Creating Models to map it to the Entity in DB
@@ -96,6 +107,19 @@ class ride(db.Model):
         self.p_id = p_id
         self.review_id = review_id
 
+    def to_dict(self):
+        return {
+            'r_id': self.r_id,
+            'r_date': self.r_date,
+            'r_time': self.r_time,
+            'r_from': self.r_from,
+            'r_to': self.r_to,
+            'v_id': self.v_id,
+            'r_fee': self.r_fee,
+            'driver_id': self.driver_id,
+            'p_id': self.p_id,
+            'review_id': self.review_id
+        }
 
 class users(db.Model):
     u_id = db.Column(db.Integer, primary_key=True)
@@ -111,7 +135,6 @@ class users(db.Model):
         self.u_email = u_email
         self.u_password = u_password
         self.u_phone = u_phone
-
 
 class vehicle(db.Model):
     v_id = db.Column(db.Integer, primary_key=True, nullable=False)
@@ -132,7 +155,7 @@ class vehicle(db.Model):
 # Routes
 
 @app.route("/")
-def hello_world():
+def home():
     return render_template('index.html')
 
 
@@ -185,34 +208,55 @@ def passenger_ride():
     db.session.commit() 
     return "Success!"
 
-
 @app.route("/reviews", methods=['POST'])
-def reviews():
-    review_id = request.form["review_id"]
+def saveReviews():
+    rev_seq = Sequence('rev_id_seq') 
+    review_id = rev_seq.next_value()
     driver_review = request.form["driver_review"]
     passenger_review = request.form["passenger_review"]
     entry = reviews(review_id, driver_review, passenger_review)
     db.session.add(entry)
     db.session.commit() 
-    return "Success!"
+    messageBody = "Review saved successfully!"
+    return render_template('index.html', hasMessage = True, messageBody=messageBody)
 
-@app.route("/ride", methods=['POST'])
-def ride():
-    r_id = request.form["r_id"]
-    r_date = request.form["r_date"]
-    r_time = request.form["r_time"]
+@app.route("/addReview")
+def addReview():
+    return render_template('addReview.html')
+
+@app.route("/saveRide", methods=['POST'])
+def saveRide():
+    ride_seq = Sequence('ride_id_seq') 
+    r_id = ride_seq.next_value()
+    r_date = datetime.now()
+    #db.Column(db.DateTime, default=datetime.now())
+    r_time = datetime.now()
     r_from = request.form["r_from"]
     r_to = request.form["r_to"]
     v_id = request.form["v_id"]
     r_fee = request.form["r_fee"]
     driver_id = request.form["driver_id"]
-    p_id = request.form["p_id"]
-    review_id = request.form["review_id"]
+    p_id = 1
+    review_id = 1
 
     entry = ride( r_id, r_date, r_time, r_from, r_to, v_id,r_fee, driver_id, p_id, review_id)
     db.session.add(entry)
     db.session.commit() 
-    return "Success!"
+    messageBody = "Successfully added the request"
+    return render_template('index.html', hasMessage = True, messageBody=messageBody)
+
+@app.route("/addRide")
+def addRide():
+    return render_template('addRide.html')
+
+@app.route("/ridesData")
+def ridesData():
+    my_dictionary = {'data': [ride_.to_dict() for ride_ in ride.query]}
+    return json.dumps(my_dictionary, indent=4, sort_keys=True, default=str)
+
+@app.route("/rides")
+def Rides():
+    return render_template('index.html')
 
 @app.route("/register")
 def SignUpPage():
@@ -221,7 +265,8 @@ def SignUpPage():
 
 @app.route("/adduser", methods=['POST'])
 def adduser():
-    u_id = 1
+    veh_seq = Sequence('test_id_seq') 
+    u_id = veh_seq.next_value()
     u_name = request.form["u_name"]
     u_email = request.form["u_email"]
     u_pasword = request.form["u_pasword"]
@@ -229,11 +274,39 @@ def adduser():
     entry = users( u_name, u_email,u_pasword,u_phone)
     db.session.add(entry)
     db.session.commit() 
-    return "Success!"
+    messageBody = "Registration successful"
+    return render_template('index.html', hasMessage = True, messageBody=messageBody)
+
+
+@app.route("/login")
+def LoginPage():
+    return render_template('login.html')
+
+
+@app.route("/validateLogin", methods=['POST'])
+def validateLogin():
+    # u_id = 1
+    u_name_ = request.form["u_name"]
+    # u_email = request.form["u_email"]
+    u_pasword_ = request.form["u_pasword"]
+    # u_phone = request.form["u_phone"]
+    # entry = users( u_name, u_email,u_pasword,u_phone)
+    # db.session.add(entry)
+    # db.session.commit()  
+    user_ = users.query.filter_by(u_name=u_name_).first()
+    loginSuccess = (user_.u_password == u_pasword_)
+    str = ""
+    if loginSuccess:
+        str = "Success!"
+    else:
+        str = "Authentication Failed!"
+
+    return render_template('index.html', hasMessage = True, messageBody=str)
 
 @app.route("/addvehicle", methods=['POST'])
 def add_vehicle():
-    v_id = request.form["v_id"]
+    veh_seq = Sequence('veh_reg_seq') 
+    v_id = veh_seq.next_value()
     model = request.form["model"]
     capacity = request.form["capacity"]
     license_plate = request.form["license_plate"]
@@ -241,6 +314,12 @@ def add_vehicle():
     entry = vehicle(v_id, model, capacity,license_plate,color)
     db.session.add(entry)
     db.session.commit() 
-    return "Success!"
+    messageBody = "Vehicle added successfully"
+    return render_template('index.html', hasMessage = True, messageBody=messageBody)
+
+@app.route("/vehicleRegister")
+def vehicleRegister():
+    return render_template('vehicleRegister.html')
+
 
  

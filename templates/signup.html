@@ -1,16 +1,9 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-      <meta charset="utf-8">
-      <title>Flask SQL Tutorial</title>
-  </head>
-  <body>
+{% extends "base.html" %}
+{% block content %}
       <form action="{{ url_for('adduser')}}" method="post">
           <h5>SignUp!</h5>
           
-          <div>
-              <input type="text" name="u_id" placeholder="Enter Id">
-          </div>
+          
           <div>
               <input type="text" name="u_name" placeholder="Enter UserName">
           </div>
@@ -27,6 +20,4 @@
               <button >Submit</button>
           </div>
       </form>
-  </body>
-
-</html>
+{% endblock %}

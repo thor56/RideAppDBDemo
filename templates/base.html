@@ -1,0 +1,48 @@
+<!doctype html>
+<html>
+  <head>
+    <title>{{ title }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-+0n0xVW2eSR5OomGNYDnhzAbDsOXxcvSN1TPprVMTNDbiYZCxYbOOl7+AMvyTG2x" crossorigin="anonymous">
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.25/css/dataTables.bootstrap5.css">
+    {{ bootstrap.load_css() }}
+  </head>
+  <body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+      <div class="container">
+      <a class="navbar-brand" href="{{ url_for('home') }}">RideShare</a>
+      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav">
+          <li class="nav-item active">
+            <a class="nav-link" href="{{ url_for('addRide') }}">Add/Request Ride<span class="sr-only"></span></a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('vehicleRegister') }}">Add Vehicle</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('addReview') }}">Add Review</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('LoginPage') }}">Login</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('SignUpPage') }}">Sign Up</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+    </nav>
+    <div class="container">
+      <h1>{{ title }}</h1>
+      <hr>
+      {% block content %}{% endblock %}
+    </div>
+    <script type="text/javascript" charset="utf8" src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.25/js/jquery.dataTables.js"></script>
+    <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.25/js/dataTables.bootstrap5.js"></script>
+    {{ bootstrap.load_js() }}
+    {% block scripts %}{% endblock %}
+  </body>
+</html>
