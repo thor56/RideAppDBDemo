@@ -9,7 +9,7 @@ from sqlalchemy import Sequence, create_engine
 from datetime import datetime
 import pandas as pd
 from flask_bootstrap import Bootstrap5
-from flask import Flask
+from flask import Flask, session
 
 
 
@@ -18,7 +18,7 @@ bootstrap = Bootstrap5(app)
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:1234@localhost/postgres'
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-# app.secret_key = 'secret string'
+app.secret_key = 'secret string'
 db = SQLAlchemy(app)
 engine = create_engine('postgresql://postgres:1234@localhost/postgres')
 
@@ -222,8 +222,10 @@ def saveReviews():
 
 @app.route("/addReview")
 def addReview():
-    return render_template('addReview.html')
-
+    if  session['loggedIn'] == True:
+        return render_template('addReview.html')
+    else:
+        return render_template('login.html', hasMessage = True, messageBody="Please login to add a Review")
 @app.route("/saveRide", methods=['POST'])
 def saveRide():
     ride_seq = Sequence('ride_id_seq') 
@@ -247,7 +249,11 @@ def saveRide():
 
 @app.route("/addRide")
 def addRide():
-    return render_template('addRide.html')
+    if  session['loggedIn'] == True:
+        return render_template('addRide.html')
+    else:
+        return render_template('login.html', hasMessage = True, messageBody="Please login to add a new Ride")
+        
 
 @app.route("/ridesData")
 def ridesData():
@@ -285,23 +291,25 @@ def LoginPage():
 
 @app.route("/validateLogin", methods=['POST'])
 def validateLogin():
-    # u_id = 1
     u_name_ = request.form["u_name"]
-    # u_email = request.form["u_email"]
     u_pasword_ = request.form["u_pasword"]
-    # u_phone = request.form["u_phone"]
-    # entry = users( u_name, u_email,u_pasword,u_phone)
-    # db.session.add(entry)
-    # db.session.commit()  
     user_ = users.query.filter_by(u_name=u_name_).first()
     loginSuccess = (user_.u_password == u_pasword_)
     str = ""
     if loginSuccess:
-        str = "Success!"
+        str = "Welcome " + u_name_ + "!"
+        session['userid'] = user_.u_id
+        session['loggedIn'] = True
     else:
         str = "Authentication Failed!"
 
     return render_template('index.html', hasMessage = True, messageBody=str)
+
+@app.route("/SignOut")
+def SignOut():
+    session['userid'] = ''
+    session['loggedIn'] = False
+    return render_template('index.html')
 
 @app.route("/addvehicle", methods=['POST'])
 def add_vehicle():
@@ -319,7 +327,11 @@ def add_vehicle():
 
 @app.route("/vehicleRegister")
 def vehicleRegister():
-    return render_template('vehicleRegister.html')
+    if  session['loggedIn'] == True:
+        return render_template('vehicleRegister.html')
+    else:
+        return render_template('login.html', hasMessage = True, messageBody="Please login to add a new Vehicle")
+    
 
 
  
