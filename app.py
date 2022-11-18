@@ -115,7 +115,7 @@ class ride(db.Model):
             'r_from': self.r_from,
             'r_to': self.r_to,
             'v_id': self.v_id,
-            'r_fee': self.r_fee,
+            'r_fee': '$'+ str(self.r_fee),
             'driver_id': self.driver_id,
             'p_id': self.p_id,
             'review_id': self.review_id
@@ -230,7 +230,7 @@ def addReview():
 def saveRide():
     ride_seq = Sequence('ride_id_seq') 
     r_id = ride_seq.next_value()
-    r_date = datetime.now()
+    r_date = request.form["r_date"]
     #db.Column(db.DateTime, default=datetime.now())
     r_time = datetime.now()
     r_from = request.form["r_from"]
@@ -331,7 +331,6 @@ def vehicleRegister():
         return render_template('vehicleRegister.html')
     else:
         return render_template('login.html', hasMessage = True, messageBody="Please login to add a new Vehicle")
-    
 
 
  

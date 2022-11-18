@@ -32,49 +32,10 @@
           {data: 'r_from',orderable: false},
           {data: 'r_to', orderable: false},
           {data: 'r_fee', searchable: false},
-          {data: 'r_date', orderable: false, searchable: false},
+          {data: 'r_date', orderable: true, searchable: false},
           {data: 'driver_id'}
         ],
       });
     });
   </script>
 {% endblock %}
-
-
-
-
-<!-- <!DOCTYPE html>
-<html lang="en">
-  <head>
-      <meta charset="utf-8">
-      <title>Flask SQL Tutorial</title>
-  </head>
-  <body>
-    <div class="table-responsive custom-scrollbar-css tableFixHead">
-        <table class="table align-items-center table-dark table-flush">
-          <thead class="thead-dark">
-            <tr>
-              <th>Ride From</th>
-              <th>Ride To</th>
-              <th>Ride Fee</th>
-              <th>When</th>
-              <th>Ride by</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for row in hdif %}
-            <tr class="row100 body">
-              <td>{{ row.r_from}}</td>
-              <td>{{ row.r_to}}</td>
-              <td>{{ row.r_fee}}</td>
-              <td>{{ row.r_date }}</td>
-              <td>{{ row.driver_id}}</td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </body>
-
-</html> -->
