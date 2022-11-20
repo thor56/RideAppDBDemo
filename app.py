@@ -3,13 +3,14 @@ import json
 import os
 from typing import Sequence
 import psycopg2
-from flask import Flask, render_template, request, flash
+from flask import Flask, render_template, request, flash, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import Sequence, create_engine
 from datetime import datetime
 import pandas as pd
 from flask_bootstrap import Bootstrap5
 from flask import Flask, session
+
 
 
 
@@ -22,27 +23,33 @@ app.secret_key = 'secret string'
 db = SQLAlchemy(app)
 engine = create_engine('postgresql://postgres:1234@localhost/postgres')
 
+# session['loggedIn'] = False
 
 # Creating Models to map it to the Entity in DB
 
 class authorize(db.Model):
-    a_id = db.Column(db.Integer,primary_key=True, nullable=False)
-    u_id = db.Column(db.Integer)
-    v_id = db.Column(db.Integer)
+    a_id = db.Column(db.Integer, db.Sequence('aith_id_seq'), primary_key=True, nullable=False)
+    u_id = db.Column(db.Integer, db.ForeignKey('users.u_id'))
+    v_id = db.Column(db.Integer, db.ForeignKey('vehicle.v_id'))
 
 
-    def __init__(self, a_id, u_id, v_id):
-        self.a_id = a_id
+    def __init__(self, u_id, v_id):
         self.u_id = u_id
         self.v_id = v_id
 
+    def to_dict(self):
+        return {
+            'a_id': self.a_id,
+            'u_id': self.u_id,
+            'v_id': self.v_id
+        }
+
 class driver(db.Model):
-    driver_id = db.Column(db.Integer,primary_key=True, nullable=False)
+    driver_id = db.Column(db.Integer, db.Sequence('driver_id_seq'), primary_key=True, nullable=False)
     u_id = db.Column(db.Integer)
     license = db.Column(db.String(120), nullable=False)
 
-    def __init__(self, driver_id, u_id, license):
-        self.driver_id = driver_id
+    def __init__(self, u_id, license):
         self.u_id = u_id
         self.license = license
 
@@ -55,35 +62,35 @@ class driver_rides(db.Model):
         self.ride_id = ride_id
 
 class passenger(db.Model):
-    p_id = db.Column(db.Integer,primary_key=True, nullable=False)
+    p_id = db.Column(db.Integer, db.Sequence('pass_id_seq'), primary_key=True, nullable=False)
     u_id = db.Column(db.Integer)
     p_address = db.Column(db.String(120), nullable=False)
 
-    def __init__(self, p_id, u_id, p_address):
-        self.p_id = p_id
+    def __init__(self, u_id, p_address):
         self.u_id = u_id
         self.p_address = p_address
 
 class passenger_ride(db.Model):
-    p_id = db.Column(db.Integer,primary_key=True, nullable=False)
-    ride_id = db.Column(db.Integer, nullable=False)
+    p_id = db.Column(db.Integer, primary_key=True, nullable=False)
+    ride_id = db.Column(db.Integer)
 
-    def __init__(self, p_id, ride_id, p_address):
+    def __init__(self, p_id, ride_id):
         self.p_id = p_id
         self.ride_id = ride_id
 
+
+
 class reviews(db.Model):
-    review_id = db.Column(db.Integer,primary_key=True, nullable=False)
+    review_id = db.Column(db.Integer, db.Sequence('rev_id_seq'), primary_key=True, nullable=False)
     driver_review = db.Column(db.Integer)
     passenger_review = db.Column(db.String(120), nullable=False)
 
-    def __init__(self, review_id, driver_review, passenger_review):
-        self.review_id = review_id
+    def __init__(self, driver_review, passenger_review):
         self.driver_review = driver_review
         self.passenger_review = passenger_review
 
 class ride(db.Model):
-    r_id = db.Column(db.Integer,primary_key=True, nullable=False)
+    r_id = db.Column(db.Integer,db.Sequence('ride_id_seq'), primary_key=True, nullable=False)
     r_date = db.Column(db.Date, nullable=False) #date.today().strftime("%Y-%m-%d")
     r_time = db.Column(db.DateTime, nullable=False)
     r_from = db.Column(db.String(120))
@@ -95,8 +102,7 @@ class ride(db.Model):
     review_id = db.Column(db.Integer, nullable=False)
 
 
-    def __init__(self, r_id, r_date, r_time, r_from, r_to, v_id,r_fee, driver_id, p_id, review_id):
-        self.r_id = r_id
+    def __init__(self, r_date, r_time, r_from, r_to, v_id,r_fee, driver_id, p_id, review_id):
         self.r_date = r_date
         self.r_time = r_time
         self.r_from = r_from
@@ -110,7 +116,7 @@ class ride(db.Model):
     def to_dict(self):
         return {
             'r_id': self.r_id,
-            'r_date': self.r_date,
+            'r_date': str(self.r_date) + " at "+ str(self.r_time.strftime("%H:%M")),
             'r_time': self.r_time,
             'r_from': self.r_from,
             'r_to': self.r_to,
@@ -122,7 +128,7 @@ class ride(db.Model):
         }
 
 class users(db.Model):
-    u_id = db.Column(db.Integer, primary_key=True)
+    u_id = db.Column(db.Integer, db.Sequence('test_id_seq'), primary_key=True)
     u_name = db.Column(db.String(80), unique=True, nullable=False)
     u_email = db.Column(db.String(120), nullable=False)
     u_password = db.Column(db.String(120), nullable=False)
@@ -130,26 +136,33 @@ class users(db.Model):
 
 
     def __init__(self,  u_name, u_email,u_password,u_phone):
-        # self.u_id = u_id
         self.u_name = u_name
         self.u_email = u_email
         self.u_password = u_password
         self.u_phone = u_phone
 
 class vehicle(db.Model):
-    v_id = db.Column(db.Integer, primary_key=True, nullable=False)
+    v_id = db.Column(db.Integer, db.Sequence('veh_reg_seq'), primary_key=True, nullable=False)
     model = db.Column(db.String(80), unique=True)
     capacity = db.Column(db.Integer, nullable=False)
     license_plate = db.Column(db.String(120),unique=True, nullable=False)
     color = db.Column(db.String(120), unique=True, nullable=False)
 
 
-    def __init__(self, v_id, model, capacity,license_plate,color):
-        self.v_id = v_id
+    def __init__(self,  model, capacity,license_plate,color):
         self.model = model
         self.capacity = capacity
         self.license_plate = license_plate
         self.color = color
+
+    def to_dict(self):
+        return {
+            'v_id' : self.v_id,
+            'model': self.model,
+            'capacity': self.capacity,
+            'license_plate': self.license_plate,
+            'color': self.color
+        }
 
 
 # Routes
@@ -179,15 +192,6 @@ def addDriver():
     db.session.commit() 
     return "Success!"
 
-@app.route("/driverrides", methods=['POST'])
-def driver_rides():
-    driver_id = request.form["driver_id"]
-    ride_id = request.form["ride_id"]
-    entry = driver_rides(driver_id, ride_id)
-    db.session.add(entry)
-    db.session.commit() 
-    return "Success!"
-
 @app.route("/addpassenger", methods=['POST'])
 def addpassenger():
     p_id = request.form["p_id"]
@@ -199,22 +203,13 @@ def addpassenger():
     db.session.commit() 
     return "Success!"
 
-@app.route("/passengerride", methods=['POST'])
-def passenger_ride():
-    p_id = request.form["p_id"]
-    ride_id = request.form["ride_id"]
-    entry = passenger_ride(p_id, ride_id)
-    db.session.add(entry)
-    db.session.commit() 
-    return "Success!"
-
 @app.route("/reviews", methods=['POST'])
 def saveReviews():
-    rev_seq = Sequence('rev_id_seq') 
-    review_id = rev_seq.next_value()
+    # rev_seq = Sequence('rev_id_seq') 
+    # review_id = rev_seq.next_value()     ------- implemented through Model creation
     driver_review = request.form["driver_review"]
     passenger_review = request.form["passenger_review"]
-    entry = reviews(review_id, driver_review, passenger_review)
+    entry = reviews(driver_review, passenger_review)
     db.session.add(entry)
     db.session.commit() 
     messageBody = "Review saved successfully!"
@@ -226,24 +221,65 @@ def addReview():
         return render_template('addReview.html')
     else:
         return render_template('login.html', hasMessage = True, messageBody="Please login to add a Review")
+        
 @app.route("/saveRide", methods=['POST'])
 def saveRide():
-    ride_seq = Sequence('ride_id_seq') 
-    r_id = ride_seq.next_value()
+    p_address = ''
+    user_id =  session['userid']
+
+    # ride_seq = Sequence('ride_id_seq') 
+    # r_id = ride_seq.next_value()      ---- implemented through Model Creation
+    radio_val = request.form["ride_type_radio"]
     r_date = request.form["r_date"]
     #db.Column(db.DateTime, default=datetime.now())
-    r_time = datetime.now()
+    r_time = request.form["r_time"]
     r_from = request.form["r_from"]
     r_to = request.form["r_to"]
-    v_id = request.form["v_id"]
+    # v_id = request.form["v_id_select"]
+    
     r_fee = request.form["r_fee"]
-    driver_id = request.form["driver_id"]
-    p_id = 1
-    review_id = 1
+    review_id = None
+    # print(request.form["v_id_select"])
+    print(radio_val)
 
-    entry = ride( r_id, r_date, r_time, r_from, r_to, v_id,r_fee, driver_id, p_id, review_id)
+    if radio_val == 'Offer_Ride':
+        v_id = 2
+        driver_id = request.form["driver_id"]
+        p_id = None
+
+
+    elif radio_val == 'Request_Ride':
+        v_id = None
+        driver_id = None
+        p_id = 2
+        p_address = request.form["p_address"]
+        
+
+    entry = ride( r_date, r_time, r_from, r_to, v_id,r_fee, driver_id, p_id, review_id)
     db.session.add(entry)
     db.session.commit() 
+
+    if radio_val == 'Offer_Ride':
+        driv_var = driver(user_id, 'license')
+        db.session.add(driv_var)
+        db.session.commit()
+        
+        driv_ride_var = driver_rides(driv_var.driver_id,entry.r_id)
+        db.session.add(driv_ride_var)
+        db.session.commit()
+
+
+    elif radio_val == 'Request_Ride':
+        pass_var = passenger(user_id, p_address)
+        db.session.add(pass_var)
+        db.session.commit()
+        
+        pass_ride_var = passenger_ride(pass_var.p_id,entry.r_id)
+        db.session.add(pass_ride_var)
+        db.session.commit()
+
+    
+
     messageBody = "Successfully added the request"
     return render_template('index.html', hasMessage = True, messageBody=messageBody)
 
@@ -254,7 +290,6 @@ def addRide():
     else:
         return render_template('login.html', hasMessage = True, messageBody="Please login to add a new Ride")
         
-
 @app.route("/ridesData")
 def ridesData():
     my_dictionary = {'data': [ride_.to_dict() for ride_ in ride.query]}
@@ -268,11 +303,10 @@ def Rides():
 def SignUpPage():
     return render_template('signup.html')
 
-
 @app.route("/adduser", methods=['POST'])
 def adduser():
-    veh_seq = Sequence('test_id_seq') 
-    u_id = veh_seq.next_value()
+    # veh_seq = Sequence('test_id_seq') 
+    # u_id = veh_seq.next_value()           ------ implemented through Model creation
     u_name = request.form["u_name"]
     u_email = request.form["u_email"]
     u_pasword = request.form["u_pasword"]
@@ -280,14 +314,15 @@ def adduser():
     entry = users( u_name, u_email,u_pasword,u_phone)
     db.session.add(entry)
     db.session.commit() 
+    entry2 = passenger(entry.u_id, "Address")
+    db.session.add(entry2)
+    db.session.commit() 
     messageBody = "Registration successful"
     return render_template('index.html', hasMessage = True, messageBody=messageBody)
-
 
 @app.route("/login")
 def LoginPage():
     return render_template('login.html')
-
 
 @app.route("/validateLogin", methods=['POST'])
 def validateLogin():
@@ -313,16 +348,27 @@ def SignOut():
 
 @app.route("/addvehicle", methods=['POST'])
 def add_vehicle():
-    veh_seq = Sequence('veh_reg_seq') 
-    v_id = veh_seq.next_value()
+    u_id = session['userid']
+    # adding vehicle
+    # veh_seq = Sequence('veh_reg_seq') 
+    # V_ID = getVehSeq()                    -- implemented through model creation
     model = request.form["model"]
     capacity = request.form["capacity"]
     license_plate = request.form["license_plate"]
     color = request.form["color"]
-    entry = vehicle(v_id, model, capacity,license_plate,color)
+    entry = vehicle(model, capacity,license_plate,color)
     db.session.add(entry)
     db.session.commit() 
     messageBody = "Vehicle added successfully"
+    # linking vehicle to user
+    # auth_seq = Sequence('aith_id_seq') 
+    # a_id = auth_seq.next_value()      ----------- implemented through Model Creation
+    auth_entry = authorize(u_id, entry.v_id)
+    db.session.add(auth_entry)
+    db.session.commit() 
+    entry2 = driver(u_id, license_plate)
+    db.session.add(entry2)
+    db.session.commit() 
     return render_template('index.html', hasMessage = True, messageBody=messageBody)
 
 @app.route("/vehicleRegister")
@@ -332,5 +378,21 @@ def vehicleRegister():
     else:
         return render_template('login.html', hasMessage = True, messageBody="Please login to add a new Vehicle")
 
+@app.route("/GetVehiclesList")
+def GetVehiclesList():
+    lis = []
+    lis2 = []
+    str1 = ''
+    u_id = session['userid']
+    auth_dict = {'data': [authorize_.to_dict() for authorize_ in authorize.query.filter_by(u_id=u_id)]}
+    for x in  auth_dict['data']:
+        lis.append(x['v_id'])
+        lis2.append(
+            [veh.to_dict() for veh in vehicle.query.filter_by(v_id=x['v_id'])]
+        )
+    
+    for x in lis2:
+        for y in x:
+            str1 += '<option value="Offer_Ride">'+ str(y["v_id"]) + ' : ' + str(y["color"]) + ' - ' + str(y["model"]) +'</option>'
+    return jsonify(options=str1)
 
- 

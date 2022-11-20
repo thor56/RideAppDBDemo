@@ -50,7 +50,31 @@
     <script type="text/javascript" charset="utf8" src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.25/js/jquery.dataTables.js"></script>
     <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.25/js/dataTables.bootstrap5.js"></script>
-    
+    <script type=text/javascript>
+      $(function() {
+        $("input[id=ride_type_offer]").change(function() {
+              $.getJSON("{{ url_for('GetVehiclesList') }}", {
+                type: $('input[name="ride_type_radio"]:checked').val(),
+              }, function(data) {
+                $("#v_id_select").html(data.options);
+              });
+              return false;
+        });
+      });
+
+
+      $('input:radio[name="ride_type_radio"]').change(function() {
+      if ($(this).val()=='Offer_Ride') {
+          $('#v_id_select').attr('hidden', false);
+          $('#p_addr').attr('hidden', true);
+      } 
+      else if ($(this).val()=='Request_Ride') {
+          $('#v_id_select').attr('hidden', true);
+          $('#p_addr').attr('hidden', false);
+      }
+        });
+
+    </script>
     
     {{ bootstrap.load_js() }}
       

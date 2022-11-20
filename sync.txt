@@ -13,6 +13,20 @@ ALTER TABLE reviews ALTER review_id SET DEFAULT nextval('rev_id_seq');
 CREATE SEQUENCE ride_id_seq MINVALUE 0;
 ALTER TABLE ride ALTER r_id SET DEFAULT nextval('ride_id_seq');
 
+CREATE SEQUENCE aith_id_seq MINVALUE 0;
+ALTER TABLE authorize ALTER a_id SET DEFAULT nextval('aith_id_seq');
+
+CREATE SEQUENCE pass_id_seq MINVALUE 0;
+ALTER TABLE passenger ALTER p_id SET DEFAULT nextval('pass_id_seq');
+
+CREATE SEQUENCE driver_id_seq MINVALUE 0;
+ALTER TABLE driver ALTER driver_id SET DEFAULT nextval('driver_id_seq');
+
+CREATE SEQUENCE pass_ride_seq MINVALUE 0;
+ALTER TABLE passenger_ride ALTER p_id SET DEFAULT nextval('pass_ride_seq');
+
+
+pass_id_seq
 
 ALTER ALL TABLE COLUMN FROM VARYING TO NON-VARYING
 

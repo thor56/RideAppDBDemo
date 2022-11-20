@@ -3,12 +3,15 @@
 {% block content %}
       <form action="{{ url_for('saveRide')}}" method="post">
           <h5>Add a ride</h5>
-          
-          <div>
+          <input type="radio" id="ride_type_offer" name="ride_type_radio" value="Offer_Ride" required>
+          <label for="ride_type_offer">Offer Ride</label>
+          <input type="radio" id="ride_type_request" name="ride_type_radio" value="Request_Ride">
+          <label for="ride_type_request">Request Ride</label><br>  
+        <div>
             <input type="date" name="r_date"  placeholder="Enter r_date">
         </div>
         <div>
-            <input type="text" name="r_time" placeholder="Enter r_time">
+            <input type="time" name="r_time" placeholder="Enter r_time">
         </div>
         <div>
             <input type="text" name="r_from" placeholder="Enter r_from">
@@ -16,17 +19,21 @@
         <div>
             <input type="text" name="r_to" placeholder="Enter r_to">
         </div>
-        <div>
+        <!-- <div>
             <input type="text" name="v_id" placeholder="Enter v_id">
-        </div>
+        </div> -->
+        <select id="v_id_select" name="v_id_select"></select>  
         <div>
-            <input type="text" name="r_fee" placeholder="Enter r_fee">
+            <input type="number" name="r_fee" placeholder="Enter r_fee">
         </div>
         <div>
             <input type="text" name="driver_id" placeholder="Enter driver_id">
         </div>
         <div>
             <input type="text" name="p_id" placeholder="Enter p_id">
+        </div>
+        <div>
+            <input type="text" name="p_address" placeholder="Enter address" id = "p_addr" hidden = "true">
         </div>
         <!-- <div>
             <input type="text" name="review_id" placeholder="Enter review_id">
@@ -36,4 +43,8 @@
               <button >Submit</button>
           </div>
       </form>
+
+
+
+      
 {% endblock %}
