@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block content %}
+      <form action="{{ url_for('add_passenger')}}" method="post">
+          <h5>Add Passenger</h5>
+          
+          
+          <div>
+              <input type="text" name="address" placeholder="Enter address">
+          </div>
+          <div>
+              <button >Submit</button>
+          </div>
+      </form>
+{% endblock %}

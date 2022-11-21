@@ -53,6 +53,13 @@ class driver(db.Model):
         self.u_id = u_id
         self.license = license
 
+    def to_dict(self):
+        return {
+            'driver_id' : self.driver_id,
+            'u_id': self.u_id,
+            'license': self.license
+        }
+
 class driver_rides(db.Model):
     driver_id = db.Column(db.Integer,primary_key=True, nullable=False)
     ride_id = db.Column(db.Integer, nullable=False)
@@ -233,9 +240,15 @@ def saveRide():
     r_date = request.form["r_date"]
     #db.Column(db.DateTime, default=datetime.now())
     r_time = request.form["r_time"]
+    license = request.form["license_id"]
+
+    
     r_from = request.form["r_from"]
     r_to = request.form["r_to"]
     # v_id = request.form["v_id_select"]
+    auth_dict = {'data': [authorize_.to_dict() for authorize_ in authorize.query.filter_by(u_id=user_id)]}
+    # ['data'][0]['v_id']
+    license_ = None
     
     r_fee = request.form["r_fee"]
     review_id = None
@@ -243,9 +256,20 @@ def saveRide():
     print(radio_val)
 
     if radio_val == 'Offer_Ride':
-        v_id = 2
-        driver_id = request.form["driver_id"]
+        driv_auth_dict = {'data': [d_data.to_dict() for d_data in driver.query.filter_by(u_id = user_id)]}
+        if driv_auth_dict['data'] != []:
+            driver_id = driv_auth_dict['data'][0]['driver_id']
+            license_ = driv_auth_dict['data'][0]['license']
+            
+        else:
+            driver_id = None
+            license_ = license
+        
         p_id = None
+        if auth_dict['data'] != []:
+            v_id = auth_dict['data'][0]['v_id']
+        else:
+            v_id = None
 
 
     elif radio_val == 'Request_Ride':
@@ -260,11 +284,13 @@ def saveRide():
     db.session.commit() 
 
     if radio_val == 'Offer_Ride':
-        driv_var = driver(user_id, 'license')
-        db.session.add(driv_var)
-        db.session.commit()
         
-        driv_ride_var = driver_rides(driv_var.driver_id,entry.r_id)
+        if driver_id == None:
+            driv_var = driver(user_id, license)
+            db.session.add(driv_var)
+            db.session.commit()
+            driver_id = driv_var.driver_id
+        driv_ride_var = driver_rides(driver_id,entry.r_id)
         db.session.add(driv_ride_var)
         db.session.commit()
 
@@ -314,9 +340,7 @@ def adduser():
     entry = users( u_name, u_email,u_pasword,u_phone)
     db.session.add(entry)
     db.session.commit() 
-    entry2 = passenger(entry.u_id, "Address")
-    db.session.add(entry2)
-    db.session.commit() 
+    
     messageBody = "Registration successful"
     return render_template('index.html', hasMessage = True, messageBody=messageBody)
 
@@ -384,15 +408,67 @@ def GetVehiclesList():
     lis2 = []
     str1 = ''
     u_id = session['userid']
-    auth_dict = {'data': [authorize_.to_dict() for authorize_ in authorize.query.filter_by(u_id=u_id)]}
-    for x in  auth_dict['data']:
-        lis.append(x['v_id'])
-        lis2.append(
-            [veh.to_dict() for veh in vehicle.query.filter_by(v_id=x['v_id'])]
-        )
-    
-    for x in lis2:
-        for y in x:
-            str1 += '<option value="Offer_Ride">'+ str(y["v_id"]) + ' : ' + str(y["color"]) + ' - ' + str(y["model"]) +'</option>'
+    auth_dict = {'data': [authorize_.to_dict() for authorize_ in authorize.query.filter_by(u_id=100)]}
+    # ['data'][0]['v_id']
+    print(auth_dict['data'] == [])
     return jsonify(options=str1)
 
+
+
+
+
+@app.route("/ConnectRide", methods=['POST'])
+def ConnectRide():
+    p_address = ''
+    user_id =  session['userid']
+    ride_id_2 = request.form["ride_id_2"]
+    radio_val = request.form["ride_type_radio_2"]
+    driv_id = None
+    pass_id = None
+
+    if session['loggedIn'] == False:
+        return render_template('login.html', hasMessage = True, messageBody="Please login to connect to a ride")
+
+    ride_Details = ride.query.get(ride_id_2)
+    
+    if radio_val == 'Offer_Ride':
+        driv_details = driver.query.filter_by(u_id=user_id).first()
+        
+        if driv_details != None:
+            driv_id = driv_details.driver_id
+            ride_Details.driver_id = driv_id
+            driv_ride_entry = driver_rides(driv_id, ride_Details.r_id)
+            db.session.add(driv_ride_entry)
+             
+        else:
+            return render_template('vehicleRegister.html')    
+    elif radio_val == 'Request_Ride':
+        pass_details = passenger.query.filter_by(u_id=user_id).first()
+        print(pass_details)
+        if pass_details != None:
+            pass_id2 = pass_details.p_id
+            ride_Details.p_id = pass_id2
+            pass_ride_entry = passenger_ride(pass_id2, ride_Details.r_id)
+            db.session.add(pass_ride_entry)
+        else:
+            return render_template('addPassenger.html')    
+        
+    db.session.commit()
+    messageBody = "Successfully added the request"
+    return render_template('index.html', hasMessage = True, messageBody=messageBody)
+
+
+    
+@app.route("/add_passenger", methods=['POST'])
+def add_passenger():
+    u_id = session['userid']
+    # adding vehicle
+    # veh_seq = Sequence('veh_reg_seq') 
+    # V_ID = getVehSeq()                    -- implemented through model creation
+    addr = request.form["address"]
+    entry = passenger(u_id, addr)
+    db.session.add(entry)
+    db.session.commit() 
+    messageBody = "Passenger added successfully"
+
+    return render_template('index.html', hasMessage = True, messageBody=messageBody)

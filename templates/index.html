@@ -15,12 +15,27 @@
         <th>Ride To</th>
         <th>Ride Fee</th>
         <th>When</th>
-        <th>Ride by</th>
+        <th>Ride ID</th>
       </tr>
     </thead>
     <tbody>
     </tbody>
   </table>
+
+  <form action="{{ url_for('ConnectRide')}}" method="post">
+    <h5>Connect to a Ride</h5>
+    <input type="radio" id="ride_type_offer_2" name="ride_type_radio_2" value="Offer_Ride" required>
+    <label for="ride_type_offer">Offer Ride</label>
+    <input type="radio" id="ride_type_request_2" name="ride_type_radio_2" value="Request_Ride">
+    <label for="ride_type_request">Request Ride</label><br>  
+  
+  <div>
+      <input type="number" name="ride_id_2" placeholder="Enter Ride ID to connect" required>
+  </div> 
+    <div>
+        <button >Submit</button>
+    </div>
+</form>
 {% endblock %}
 
 {% block scripts %}
@@ -33,7 +48,7 @@
           {data: 'r_to', orderable: false},
           {data: 'r_fee', searchable: false},
           {data: 'r_date', orderable: true, searchable: false},
-          {data: 'driver_id', orderable: false}
+          {data: 'r_id', orderable: false}
         ],
       });
     });
