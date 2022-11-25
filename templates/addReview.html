@@ -4,12 +4,16 @@
 {% block content %}
       <form action="{{ url_for('saveReviews')}}" method="post">
           <h5>Add Review!</h5>
-         
+          <h6>Select Ride type</h6>
+          <input type="radio" id="ride_type_offer" name="ride_type_radio" value="Offer_Ride" required>
+          <label for="ride_type_offer">Offer Ride</label>
+          <input type="radio" id="ride_type_request" name="ride_type_radio" value="Request_Ride">
+          <label for="ride_type_request">Request Ride</label><br>  
           <div>
-            <input type="text" name="driver_review" placeholder="Enter driver_review">
+            <input type="number" name="ride_id" placeholder="Enter Ride ID" required>
         </div>
         <div>
-            <input type="text" name="passenger_review" placeholder="Enter passenger_review">
+            <input type="text" name="review" placeholder="Enter Review" required>
         </div>
        
           <div>

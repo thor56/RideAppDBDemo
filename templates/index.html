@@ -16,6 +16,7 @@
         <th>Ride Fee</th>
         <th>When</th>
         <th>Ride ID</th>
+        <th>Ride Type</th>
       </tr>
     </thead>
     <tbody>
@@ -48,7 +49,9 @@
           {data: 'r_to', orderable: false},
           {data: 'r_fee', searchable: false},
           {data: 'r_date', orderable: true, searchable: false},
-          {data: 'r_id', orderable: false}
+          {data: 'r_id', orderable: false},
+          {data: 'ride_type', orderable: false}
+          
         ],
       });
     });

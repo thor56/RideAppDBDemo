@@ -17,15 +17,17 @@ from flask import Flask, session
 app = Flask(__name__)
 bootstrap = Bootstrap5(app)
 
-# app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:1234@localhost/postgres'
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DATABASE_URL1")
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:1234@localhost/postgres'
+# app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DATABASE_URL1")
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.secret_key = 'secret string'
+
 db = SQLAlchemy(app)
 # engine = create_engine('postgresql://postgres:1234@localhost/postgres')
 # # engine = create_engine(os.environ.get("DATABASE_URL1"))
 
-# session['loggedIn'] = False
+
+
 
 # Creating Models to map it to the Entity in DB
 
@@ -109,9 +111,10 @@ class ride(db.Model):
     driver_id = db.Column(db.Integer, nullable=False)
     p_id = db.Column(db.Integer, nullable=False)
     review_id = db.Column(db.Integer, nullable=False)
+    ride_type = db.Column(db.Integer, nullable=False)
 
 
-    def __init__(self, r_date, r_time, r_from, r_to, v_id,r_fee, driver_id, p_id, review_id):
+    def __init__(self, r_date, r_time, r_from, r_to, v_id,r_fee, driver_id, p_id, review_id, ride_type):
         self.r_date = r_date
         self.r_time = r_time
         self.r_from = r_from
@@ -121,6 +124,7 @@ class ride(db.Model):
         self.driver_id = driver_id
         self.p_id = p_id
         self.review_id = review_id
+        self.ride_type = ride_type
 
     def to_dict(self):
         return {
@@ -133,7 +137,8 @@ class ride(db.Model):
             'r_fee': '$'+ str(self.r_fee),
             'driver_id': self.driver_id,
             'p_id': self.p_id,
-            'review_id': self.review_id
+            'review_id': self.review_id,
+            'ride_type': "Drive Offered" if self.ride_type == 0 else "Ride Requested"
         }
 
 class users(db.Model):
@@ -216,12 +221,38 @@ def addpassenger():
 def saveReviews():
     # rev_seq = Sequence('rev_id_seq') 
     # review_id = rev_seq.next_value()     ------- implemented through Model creation
-    driver_review = request.form["driver_review"]
-    passenger_review = request.form["passenger_review"]
-    entry = reviews(driver_review, passenger_review)
-    db.session.add(entry)
-    db.session.commit() 
-    messageBody = "Review saved successfully!"
+    driver_review = ""
+    passenger_review = ""
+    ride_type = request.form["ride_type_radio"]
+    if ride_type == 'Offer_Ride':
+        driver_review = request.form["review"]
+    elif ride_type == 'Request_Ride':
+        passenger_review = request.form["review"]
+
+    ride_id = request.form["ride_id"]
+    ride_Details = ride.query.get(ride_id)
+    if ride_Details == None:
+        
+        messageBody = "Invalid ride details!"
+
+    else:
+        
+        if ride_Details.review_id != None:
+            rev_details = reviews.query.filter_by(review_id=ride_Details.review_id).first()
+            if rev_details != None:
+                if ride_type == 'Offer_Ride':
+                    rev_details.driver_review = request.form["review"]
+                elif ride_type == 'Request_Ride':
+                    rev_details.passenger_review = request.form["review"]
+            db.session.commit() 
+        else:
+            entry = reviews(driver_review, passenger_review)
+            db.session.add(entry)
+            db.session.commit()
+            ride_Details.review_id = entry.review_id
+            db.session.commit()
+
+        messageBody = "Review saved successfully!"
     return render_template('index.html', hasMessage = True, messageBody=messageBody)
 
 @app.route("/addReview")
@@ -251,12 +282,24 @@ def saveRide():
     auth_dict = {'data': [authorize_.to_dict() for authorize_ in authorize.query.filter_by(u_id=user_id)]}
     # ['data'][0]['v_id']
     license_ = None
+    ride_type = 0
     
     r_fee = request.form["r_fee"]
     review_id = None
     # print(request.form["v_id_select"])
     print(radio_val)
-
+    # if radio_val == 'Offer_Ride':
+    #     driv_details = driver.query.filter_by(u_id=user_id).first()
+        
+    #     if driv_details == None:
+    #         return render_template('vehicleRegister.html')
+           
+    # elif radio_val == 'Request_Ride':
+    #     pass_details = passenger.query.filter_by(u_id=user_id).first() 
+        
+    #     if pass_details == None:
+    #         return render_template('addPassenger.html')  
+        
     if radio_val == 'Offer_Ride':
         driv_auth_dict = {'data': [d_data.to_dict() for d_data in driver.query.filter_by(u_id = user_id)]}
         if driv_auth_dict['data'] != []:
@@ -264,8 +307,9 @@ def saveRide():
             license_ = driv_auth_dict['data'][0]['license']
             
         else:
-            driver_id = None
-            license_ = license
+            # driver_id = None
+            # license_ = license
+            return render_template('vehicleRegister.html')
         
         p_id = None
         if auth_dict['data'] != []:
@@ -275,13 +319,18 @@ def saveRide():
 
 
     elif radio_val == 'Request_Ride':
+        pass_details = passenger.query.filter_by(u_id=user_id).first() 
+        
+        if pass_details == None:
+            return render_template('addPassenger.html')
         v_id = None
         driver_id = None
-        p_id = 2
+        p_id = pass_details.p_id
         p_address = request.form["p_address"]
+        ride_type = 1
         
 
-    entry = ride( r_date, r_time, r_from, r_to, v_id,r_fee, driver_id, p_id, review_id)
+    entry = ride( r_date, r_time, r_from, r_to, v_id,r_fee, driver_id, p_id, review_id, ride_type)
     db.session.add(entry)
     db.session.commit() 
 
@@ -415,10 +464,6 @@ def GetVehiclesList():
     print(auth_dict['data'] == [])
     return jsonify(options=str1)
 
-
-
-
-
 @app.route("/ConnectRide", methods=['POST'])
 def ConnectRide():
     p_address = ''
@@ -432,6 +477,14 @@ def ConnectRide():
         return render_template('login.html', hasMessage = True, messageBody="Please login to connect to a ride")
 
     ride_Details = ride.query.get(ride_id_2)
+    if ride_Details.ride_type == 0 and radio_val == 'Offer_Ride':
+        messageBody = "Cannot offer ride to a driver"
+        return render_template('index.html', hasMessage = True, messageBody=messageBody)
+    elif ride_Details.ride_type == 1 and radio_val == 'Request_Ride':
+        messageBody = "Cannot ride a ride request"
+        return render_template('index.html', hasMessage = True, messageBody=messageBody)
+        
+
     
     if radio_val == 'Offer_Ride':
         driv_details = driver.query.filter_by(u_id=user_id).first()
@@ -459,8 +512,6 @@ def ConnectRide():
     messageBody = "Successfully added the request"
     return render_template('index.html', hasMessage = True, messageBody=messageBody)
 
-
-    
 @app.route("/add_passenger", methods=['POST'])
 def add_passenger():
     u_id = session['userid']
