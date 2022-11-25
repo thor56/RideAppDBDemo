@@ -17,13 +17,13 @@ from flask import Flask, session
 app = Flask(__name__)
 bootstrap = Bootstrap5(app)
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:1234@localhost/postgres'
-# app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DATABASE_URL1")
+# app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:1234@localhost/postgres'
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DATABASE_URL1")
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.secret_key = 'secret string'
 db = SQLAlchemy(app)
-engine = create_engine('postgresql://postgres:1234@localhost/postgres')
-# engine = create_engine(os.environ.get("DATABASE_URL1"))
+# engine = create_engine('postgresql://postgres:1234@localhost/postgres')
+# # engine = create_engine(os.environ.get("DATABASE_URL1"))
 
 # session['loggedIn'] = False
 
