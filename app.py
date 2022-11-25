@@ -17,8 +17,8 @@ from flask import Flask, session
 app = Flask(__name__)
 bootstrap = Bootstrap5(app)
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgres://dshuvdasgsolmt:9b62d7421556a5099ac2d0f4f1ca0e9657af23994317485f29f1f7f90f340a6d@ec2-44-205-177-160.compute-1.amazonaws.com:5432/d1acs1dil6bs26'
-# app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DATABASE_URL1")
+# app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:1234@localhost/postgres'
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DATABASE_URL")
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.secret_key = 'secret string'
 
