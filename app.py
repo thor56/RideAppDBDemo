@@ -21,6 +21,8 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://dshuvdasgsolmt:9b62d742155
 # app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DATABASE_URL")
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.secret_key = 'secret string'
+# session['userid'] = ''
+# session['loggedIn'] = False
 
 db = SQLAlchemy(app)
 # engine = create_engine('postgresql://postgres:1234@localhost/postgres')
@@ -183,6 +185,9 @@ class vehicle(db.Model):
 
 @app.route("/")
 def home():
+    if session.__contains__("loggedIn") == False:
+        session['userid'] = ''
+        session['loggedIn'] = False
     return render_template('index.html')
 
 
